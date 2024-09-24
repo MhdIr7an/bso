@@ -1,0 +1,15 @@
+---
+interface Props {
+    current_page: 'cart' | 'catalog' | 'catalog/id';
+}
+
+import Navbar from "../components/Navbar.astro";
+import Layout from "./Layout.astro";
+
+const { current_page } = Astro.props;
+---
+
+<Layout>
+    <Navbar current_page={current_page} />
+    <slot />
+</Layout>

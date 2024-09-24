@@ -1,0 +1,25 @@
+---
+import ProductCard from "../components/ProductCard.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getCookies } from "../lib/utils";
+
+const user_id = getCookies(Astro.request, 'user_id')
+const response = await fetch(`${import.meta.env.API_URL}/users/${user_id}?populate[Cart][populate]=Image`)
+const cart = await response.json()
+---
+
+<BaseLayout current_page="cart">
+  <section class="m-12">
+    <h1 class="mb-5 underline text-[34px] font-semibold">Cart</h1>
+    <div class="grid lg:grid-cols-2 xl:grid-cols-4 gap-4">
+      {cart.Cart.length > 0
+        ? cart.Cart.map((item: any) => <ProductCard 
+        id={item.documentId}
+        product_name={item.Title}
+        price={item.Price}
+        image={item.Image[0].url}
+        isCart={true}
+      />) : <p>No products in the cart.</p>}
+    </div>
+  </section>
+</BaseLayout>

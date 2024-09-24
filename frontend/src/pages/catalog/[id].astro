@@ -1,0 +1,114 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getCookies } from "../../lib/utils";
+
+const { id } = Astro.params
+const api_url = import.meta.env.API_URL
+const token = import.meta.env.TOKEN
+
+const user_id = getCookies(Astro.request, 'user_id')
+
+const response = await fetch(`${api_url}/products/${id}?populate=Image`);
+const result = await response.json();
+const product = result.data;
+---
+
+<BaseLayout current_page="catalog/id">
+    <section class="m-12">
+      <h1 class="mb-5 underline text-[34px] font-semibold">{product.Title}</h1>
+      <div class="flex flex-col gap-8 justify-center items-center">
+        <img class="w-[15rem] min-h-[15rem] object-contain mix-blend-multiply" src={`${api_url.replace('/api', product.Image[0].url)}`} src={`${api_url.replace('/api', product.Image[0].alternativeText)}`} />
+        <table class="w-[10%]">
+          <tr class="flex justify-between">
+            <td>
+              <p>Price:</p>
+            </td>
+            <td>
+              <p>{product.Price}</p>
+            </td>
+          </tr>
+        </table>
+        <button id="addBtn" class="w-[150px] p-[0.2rem] rounded-[5px] cursor-pointer border-[1px] border-[var(--color-secondary)] shadow-[0_0_5px_var(--color-secondary)] h-[30px] bg-[#E6F3F4] hover:bg-[#F4EEE6] focus:bg-[#F4EEE6]">Add To Cart</button>
+      </div>
+    </section>
+</BaseLayout>
+
+<script is:inline define:vars={{product, api_url, token, user_id}}>
+  document.addEventListener("DOMContentLoaded", function() {
+
+    const addBtn = document.querySelector('#addBtn')
+    addBtn.addEventListener("click", async function() {
+      try {
+        const item = await fetch(`${api_url}/products/${product.documentId}`);
+        const productData = await item.json();
+
+        const cartitem = await fetch(`${api_url}/users/${user_id}?populate=Cart`);
+        const cartitems = await cartitem.json();
+
+        let updatedCart = cartitems.Cart || [];
+
+        updatedCart.push(productData.data);
+        
+        const data = {
+          Cart: updatedCart
+        };
+
+        const response = await fetch(`${api_url}/users/${user_id}`, {
+          method: "PUT",
+          headers: {
+            'content-type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          console.error('Failed to update the cart:', result);
+          alert('Something went wrong while updating the cart.');
+        } else {
+          alert('Added to Cart successfully!');
+          window.location.replace('/catalog')
+        }
+
+      } catch (e) {
+        alert("Server Error")
+      }
+    })
+
+  })
+</script>
+
+<!-- <tr class="flex justify-between">
+            <td>
+              <label for="qty">
+                Quantity: 
+              </label>
+            </td>
+            <td>
+              <input type="number" name="qty" id="qty" class="text-right" />
+            </td>
+          </tr>
+          <tr class="flex justify-between">
+            <td>
+              <label class="gap-4 total hidden" for="qty">
+                Total Amount: 
+              </label>
+            </td>
+            <td>
+              <p class="total total-amount"></p>
+            </td>
+          </tr> -->
+
+          <!-- // const qty = (document.getElementsByName("qty")[0])
+    // qty.addEventListener("input", function() {
+    //   const total = document.querySelector(".total")
+    //   if (qty.value) {
+    //     document.querySelector(".total-amount").textContent = qty.value * product.Price
+    //     total.classList.replace("hidden", "flex")
+    //   } else {
+    //     document.querySelector(".total-amount").textContent = ''
+    //     total.classList.replace("flex", "hidden")
+    //   }
+    // }) -->

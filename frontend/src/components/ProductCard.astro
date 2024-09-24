@@ -1,0 +1,77 @@
+---
+import { getCookies } from '../lib/utils';
+
+interface Props {
+  id: string;
+  product_name: string;
+  price: number;
+  image: string;
+  isCart?: boolean;
+}
+
+const { product_name, price, id, image, isCart = false } = Astro.props;
+
+const api_url = import.meta.env.API_URL
+const token = import.meta.env.TOKEN
+const user_id = getCookies(Astro.request, 'user_id')
+---
+  
+<div class="flex flex-col md:flex-row md:gap-4 gap-2 items-center justify-around shadow-[0_0_5px_var(--color-secondary)] h-[12rem] rounded-[10px] p-2">
+  <img class="w-[80px] min-h-[80px] object-contain mix-blend-multiply" src={`${api_url.replace('/api', image)}`} alt={`img`}>
+  <div class="flex flex-col">
+      <div>
+          <h3>{product_name}</h3>
+      </div>
+      <div class="flex flex-col md:gap-6 gap-2">
+          <p>Price: {price}</p>
+          {isCart ? <button id={`removeBtn${id}`} class="text-[var(--color-background)] bg-red-800 p-1 w-[150px] rounded-md mr-4 hover:bg-red-600 cursor-pointer">Remove</button> :
+          <a href={`catalog/${id}`} class="flex justify-center items-center w-[150px] p-[0.2rem] rounded-[5px] cursor-pointer border-[1px] border-[var(--color-secondary)] shadow-[0_0_5px_var(--color-secondary)] h-[30px] bg-[#E6F3F4] hover:bg-[#F4EEE6] focus:bg-[#F4EEE6]">View</a>}
+      </div>
+  </div>
+</div>
+
+<script is:inline define:vars={{api_url, token, user_id}}>
+  function addRemoveButtonListeners() {
+    try {
+      const removeButtons = document.querySelectorAll('[id^="removeBtn"]');
+      if (removeButtons.length > 0)
+        removeButtons.forEach(button => {
+          button.addEventListener('click', async () => {
+            const id = button.id.replace('removeBtn', '');
+            
+            if (id) {
+              const cartitem = await fetch(`${api_url}/users/${user_id}?populate=Cart`);
+              const cartitems = await cartitem.json();
+
+              const updatedCart = cartitems.Cart.filter(item => item.documentId !== id);
+
+              const data = {
+                Cart: updatedCart.length > 0 ? updatedCart : []
+              };
+
+              const response = await fetch(`${api_url}/users/${user_id}`, {
+                method: "PUT",
+                headers: {
+                  'content-type': 'application/json',
+                  'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(data) 
+              });
+
+              const result = await response.json();
+
+              if (!response.ok) {
+                alert("Something Went Wrong!" + result)
+              } else {
+                window.location.reload()
+              }
+            }
+          });
+        });
+    } catch (e) {
+      alert("Server Error")
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', addRemoveButtonListeners);
+</script>

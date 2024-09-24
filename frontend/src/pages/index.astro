@@ -1,0 +1,13 @@
+---
+import { getCookies } from "../lib/utils";
+
+const user_id = getCookies(Astro.request, 'user_id')
+---
+
+<script is:inline define:vars={{user_id}}>
+    if (!user_id) {
+        window.location.href = '/login';
+    } else {
+        window.location.href = '/catalog';
+    }
+</script>

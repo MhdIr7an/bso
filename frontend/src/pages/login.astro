@@ -1,0 +1,70 @@
+---
+import Layout from "../layouts/Layout.astro";
+
+const api_url = import.meta.env.API_URL;
+---
+
+<Layout>
+    <section class="grid place-items-center w-[100dvw] h-[100dvh]">
+        <form class="gap-[2rem] shadow-[0_0_10px_var(--color-secondary)] flex flex-col justify-between items-center min-h-[22rem] w-[18rem] rounded-[25px] px-[5rem] py-4">
+            <div>
+                <p class="underline text-[34px] font-semibold">LOGIN</p>
+            </div>
+            <div class="flex flex-col gap-4 items-center">
+                <label for="username">
+                    Username
+                    <input
+                    id="username"
+                    name="username"
+                    type="text"
+                    class="bg-transparent"
+                    required
+                    />
+                </label>
+                <label for="password">
+                    Password
+                    <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    class="bg-transparent"
+                    required
+                    />
+                </label>
+                <button type="submit" class="w-[150px] p-[0.2rem] mt-6 rounded-[5px] cursor-pointer border-[1px] border-[var(--color-secondary)] shadow-[0_0_5px_var(--color-secondary)] h-[30px] bg-[#E6F3F4] hover:bg-[#F4EEE6] focus:bg-[#F4EEE6]">Login</button>
+                <a href="/register" class="text-[var(--color-primary)] hover:text-[#3b74ca] text-[14px]">create account</a>
+            </div>
+        </form>
+    </section>
+</Layout>
+<script is:inline type="module" define:vars={{api_url}}>
+import { setCookie } from "./src/lib/utils";
+
+  document.addEventListener("DOMContentLoaded", function() {
+    
+    const form = document.querySelector("form");
+    form.addEventListener("submit", async function(e) {
+      e.preventDefault()
+      const username = (document.getElementsByName("username")[0]).value;
+      const password = (document.getElementsByName("password")[0]).value;
+      
+      const response = await fetch(`${api_url}/users`)
+      const data = await response.json()
+      const result = data.filter(res => res.username === username)[0]
+
+      if (!result) {
+        alert("Invalid username")
+        return
+      }
+      
+      if (result.userpass === password) {
+        setCookie("user_id", result.id);
+        setCookie("username", username);
+        
+        window.location.replace('/');
+      } else {
+        alert("Invalid password")
+      }
+    })
+  })
+</script>
